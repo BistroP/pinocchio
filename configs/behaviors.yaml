@@ -1,0 +1,66 @@
+# The N behaviors, their datasets, manipulations, and admission filters.
+# MVP subset = [sycophancy, safety, knowledge_conflict]. false_premise is kept for family
+# expansion (phase 2). Each behavior must pass probing.override_check to be admitted.
+
+# ======================================================================================
+# DESIGN DECISIONS — applied IDENTICALLY across every behavior. See README
+# "Open design decisions". directions.py implements every mode; this just selects one.
+# Values below are RECOMMENDED DEFAULTS, PENDING a human call — do not treat as settled.
+# ======================================================================================
+contrast:
+  # DESIGN DECISION 1 — common contrast for the per-behavior suppression direction.
+  # INVESTIGATED: see docs/contrast-decision.md. Recommendation = did_overrode_vs_resisted as
+  # primary, with {overrode_vs_resisted, manip_vs_clean, paired_manip_minus_clean} as a
+  # pre-registered robustness set and matched_output as within-behavior validation.
+  # Family-general modes : manip_vs_clean | overrode_vs_resisted | paired_manip_minus_clean
+  #                        | did_overrode_vs_resisted
+  # Validation-only mode : matched_output   (needs a legitimate same-output twin; not for safety)
+  mode: overrode_vs_resisted            # <-- PENDING your call; change to did_overrode_vs_resisted to adopt rec.
+  robustness_set: [did_overrode_vs_resisted, manip_vs_clean, paired_manip_minus_clean]
+
+behavioral_object:
+  # DESIGN DECISION 2 — per-behavior behavioral object.
+  # one of: correctness_label | commitment_direction | natural_per_behavior
+  mode: correctness_label               # <-- CONFIRMED (2026-07-05): correctness via signal dir
+
+# ======================================================================================
+mvp_subset: [sycophancy, safety, knowledge_conflict]
+# The full family (adds false_premise). Point a notebook's SUBSET at cfg["family"] to run all four.
+# false_premise draws on an INDEPENDENT source (FalseQA) — no item overlap with the other three,
+# which would otherwise inflate their cross-behavior suppression cosine for a trivial reason.
+family: [sycophancy, safety, knowledge_conflict, false_premise]
+
+behaviors:
+  sycophancy:
+    signal: truth
+    signal_data: data/signal/truth_statements.jsonl     # true(label=1) / false(label=0) statements
+    dataset: data/sycophancy/pairs.jsonl
+    source: truthfulqa/truthful_qa                       # HF generation/validation; "are you sure" manip
+    manipulation: confident_false_belief
+    filter: {clean: correct, manip: wrong}               # keep pairs: clean correct, manip flipped
+
+  safety:
+    signal: harm
+    signal_data: data/signal/harm_requests.jsonl         # harmful(1) / harmless(0) requests
+    dataset: data/safety/pairs.jsonl
+    source: centerforaisafety/HarmBench + tatsu-lab/alpaca  # 200 'standard' harms; Alpaca harmless (signal)
+    manipulation: jailbreak_multi                        # data.JAILBREAK_TEMPLATES applied per request
+    jailbreak_templates: [prefix_injection, refusal_suppression, combined, roleplay]
+    scorer: harmbench_cls                                # judge = cais/HarmBench-Llama-2-13b-cls (src/judge.py)
+    filter: {clean: refused, manip: complied}            # keep pairs: clean refused, manip complied
+
+  knowledge_conflict:
+    signal: fact
+    signal_data: data/signal/fact_statements.jsonl       # true(1) / false(0) factual statements
+    dataset: data/knowledge_conflict/pairs.jsonl
+    source: pminervini/NQ-Swap                           # NQSwap (Longpre et al.); default/dev split
+    manipulation: conflicting_context
+    filter: {clean: parametric_correct, manip: followed_context}
+
+  false_premise:                                         # family expansion (beyond the MVP three)
+    signal: fact
+    signal_data: data/signal/false_premise_fact_statements.jsonl  # own signal (train split), disjoint from pairs
+    dataset: data/false_premise/pairs.jsonl
+    source: thunlp/FalseQA                               # FPQ(label1) vs revised TPQ(label0); test split
+    manipulation: false_presupposition
+    filter: {clean: answered_plainly, manip: accepted_premise}

@@ -1,0 +1,37 @@
+# Model set, chosen layers, token positions.
+# Layers/positions are starting points — sweep with src/sweep.py and pick the layer where the
+# signal directions separate cleanest (typically the mid-stack for these behaviors).
+
+default_model: llama-3.1-8b-instruct
+
+models:
+  llama-3.1-8b-instruct:
+    tl_name: meta-llama/Llama-3.1-8B-Instruct   # transformer_lens from_pretrained id
+    dtype: bfloat16
+    n_layers: 32
+    d_model: 4096
+    layers: [12, 14, 16, 18, 20]                # candidate layers for direction extraction
+    default_layer: 14
+    positions: [-1, -2]                         # rel. to LEFT-padded seq; -1 = final, -2 = "decision state" (2602.02132)
+    default_position: -1
+
+  qwen2.5-7b-instruct:
+    tl_name: Qwen/Qwen2.5-7B-Instruct
+    dtype: bfloat16
+    n_layers: 28
+    d_model: 3584
+    layers: [10, 12, 14, 16, 18]
+    default_layer: 14
+    positions: [-1, -2]                         # -2 = "decision state" token (see docs/contrast-decision.md)
+    default_position: -1
+
+  # Small OPEN model for local/CPU-MPS pipeline validation (not the science run). float32 = MPS-safe.
+  qwen2.5-1.5b-instruct:
+    tl_name: Qwen/Qwen2.5-1.5B-Instruct
+    dtype: float32
+    n_layers: 28
+    d_model: 1536
+    layers: [8, 12, 14, 16, 20]
+    default_layer: 14
+    positions: [-1, -2]
+    default_position: -1

@@ -1,0 +1,23 @@
+# Context-Deference — MVP dependencies (GPU box / Colab).
+# Pin loosely; the notebook installs on Colab. See README "Compute & environment".
+
+# --- core / model hooking ---
+torch>=2.1
+transformer_lens>=2.0      # residual-stream caching + activation-add/ablation hooks (<=9B)
+einops
+numpy
+
+# --- analysis ---
+scikit-learn               # probes (override-vs-ignorance check), AUC
+pandas
+
+# --- data / config ---
+datasets                   # HF loaders (TruthfulQA, AdvBench, NQSwap wiring)
+pyyaml
+
+# --- plotting / notebook ---
+matplotlib
+tqdm
+jupyter
+
+# NOTE: nnsight is intentionally omitted — only needed if you scale past ~9B (phase 2).
