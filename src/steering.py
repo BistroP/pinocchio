@@ -85,22 +85,14 @@ def sample_random_directions(d_model: int, n: int, seed: int = 0, device="cpu") 
 
 
 # ---------------------------------------------------------------- steered generation (GPU)
-@torch.no_grad()
-def run_with_hooks(bundle, prompts, hooks, max_new_tokens: int = 64, batch_size: int = 8,
+def run_with_hooks(bundle, prompts, hooks, max_new_tokens: int = 64, batch_size: int | None = None,
                    prepend_bos: bool = False) -> list[str]:
     """Greedy generation with `hooks` (list of (hook_name, fn)) attached; returns new text only.
-    Pass hooks=[] for an un-intervened baseline run."""
-    model = bundle.model
-    outs: list[str] = []
-    for i in range(0, len(prompts), batch_size):
-        batch = list(prompts[i:i + batch_size])
-        tokens = model.to_tokens(batch, prepend_bos=prepend_bos)
-        with model.hooks(fwd_hooks=hooks):
-            gen = model.generate(tokens, max_new_tokens=max_new_tokens, do_sample=False, verbose=False)
-        for j in range(gen.shape[0]):
-            outs.append(model.to_string(gen[j, tokens.shape[1]:]))
-    return outs
-
+    Pass hooks=[] for an un-intervened baseline run. Delegates to model.generate, so ablation and
+    steering runs get the same length-sorted batching as baselines."""
+    from . import model as M
+    return M.generate(bundle, prompts, max_new_tokens=max_new_tokens, batch_size=batch_size,
+                      prepend_bos=prepend_bos, fwd_hooks=list(hooks))
 
 def behavior_rate(bundle, behavior, prompts, pairs, hooks=(), max_new_tokens: int = 64) -> float:
     """Mean behavioral score (1 = signal overridden) over `prompts` under `hooks`."""

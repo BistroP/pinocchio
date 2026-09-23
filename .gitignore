@@ -1,0 +1,31 @@
+# --- cached activations / model artifacts (keep OUT of git; can be large) ---
+*.pt
+*.pth
+*.npy
+*.npz
+*.parquet
+*.safetensors
+cache/
+activations/
+data/**/raw/
+
+# --- results: keep the folder + plots/JSON, drop heavy tensors ---
+results/*.pt
+results/*.npz
+
+# --- python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+notebooks/_local_run_*.ipynb       # nbconvert validation artifacts (small-model runs)
+
+# --- HF / misc ---
+.cache/
+.DS_Store
+
+# --- local tooling / scratch (never push) ---
+.claude/
+*.bak.jsonl

@@ -136,7 +136,7 @@ def m_conflicting_context(question: str, context_answer: str,
     clean = question
     passage = context_passage or _context_passage(question, context_answer)  # real NQSwap passage if given
     manip = (f"Context: {passage}\n\n"
-             f"Using only the context above, answer: {question}")
+             f"Question: {question}\nAnswer:")
     return clean, manip
 
 
