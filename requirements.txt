@@ -3,7 +3,7 @@
 
 # --- core / model hooking ---
 torch>=2.1
-transformer_lens>=2.0      # residual-stream caching + activation-add/ablation hooks (<=9B)
+transformer_lens==3.5.1    # PINNED 2026-09-22: 4.0.0 (major) broke a fresh Colab install; 3.5.1 verified end-to-end
 einops
 numpy
 

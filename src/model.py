@@ -15,8 +15,10 @@ import torch
 
 try:
     from transformer_lens import HookedTransformer
-except Exception:  # allow importing this module without transformer_lens installed
+    _TL_IMPORT_ERROR: Exception | None = None
+except Exception as _e:  # allow importing this module without transformer_lens; keep the REAL reason
     HookedTransformer = None  # type: ignore
+    _TL_IMPORT_ERROR = _e
 
 DEFAULT_DTYPE = "bfloat16"
 _DTYPES = {"bfloat16": torch.bfloat16, "float16": torch.float16, "float32": torch.float32}
@@ -71,7 +73,10 @@ def default_layer_for(mc: dict, bundle: "ModelBundle") -> int:
 def load_model(tl_name: str, device: str | None = None, dtype: str = DEFAULT_DTYPE,
                n_ctx: int | None = None) -> ModelBundle:
     if HookedTransformer is None:
-        raise RuntimeError("transformer_lens is not installed (pip install -r requirements.txt).")
+        raise RuntimeError("transformer_lens failed to import -- the real error is chained below "
+                           f"({type(_TL_IMPORT_ERROR).__name__}: {_TL_IMPORT_ERROR}). Usually a transformer_lens/"
+                           "transformers version clash: pip install -r requirements.txt, then RESTART the kernel."
+                           ) from _TL_IMPORT_ERROR
     device = pick_device(device)
     # Some models get an artificially low n_ctx from transformer_lens ("capped due to memory
     # issues"): Llama-3.1-8B is pinned to 2048. Long prompts (e.g. kc passages) then push a
